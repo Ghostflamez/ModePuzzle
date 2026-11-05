@@ -1,3 +1,4 @@
+import {tl} from '../i18n/index.js';
 /* Machines whose module bays this tool can optimise, transcribed from the game code
  * (MachineHelper.LoadUpgrade / ExpandModule, Machine*.CreateMachineInventoryWindow and
  * the module type filters in each machine constructor). Chemical machines are out of scope. */
@@ -37,23 +38,24 @@ const U = MODULE_TYPES.universal;
 /**
  * Every vanilla machine with a module bay, by save identifier (FurnitureItemDirectory.InitDirectory
  * → Machine*.CreateMachineInventoryWindow / constructor module filters).
+ * `name`: the game's name for the machine (used when the UI language differs from the save's).
  * `outputs`: machine-specific effects computed in core/machine-stats.js (MACHINE_OUTPUTS).
  * `power`: 'basic' (ModuleHelper.ApplyBasicModuleEffect) or 'dealMaker' (MachineDealMaker.UpdatePowerUse).
  * Machines carrying STANDARD_MACHINE_TAG that are not listed (e.g. from mods) use UNKNOWN_STANDARD_MACHINE.
  */
 export const MACHINE_BAYS = Object.freeze({
-  hydroponic: {layout: 'standard', accepts: [U, MODULE_TYPES.hydroponic], outputs: ['harvest']},
-  water_purifier: {layout: 'standard', accepts: [U], outputs: ['purifyAmount', 'purityCapQuality']},
-  furnace: {layout: 'standard', accepts: [U, MODULE_TYPES.furnace], outputs: ['furnaceGrade']},
-  plant_dna_manipulator: {layout: 'standard', accepts: [U, MODULE_TYPES.dna], outputs: ['dnaQuality']},
-  printer: {layout: 'standard', accepts: [U, MODULE_TYPES.printer], outputs: ['printQuality']},
-  deal_maker: {layout: 'standard', accepts: [U], outputs: ['dealChance'], power: 'dealMaker'},
-  security_alarm: {layout: 'standard', accepts: [U, MODULE_TYPES.alarm], outputs: ['alarmPerformance']},
-  mirage_projector: {layout: 'standard', accepts: [U], outputs: ['attractiveness']},
-  moisture_farm: {layout: 'standard', accepts: [U], outputs: ['moistureVolume', 'moistureGrade']},
-  desequencer: {layout: 'standard', accepts: [U, MODULE_TYPES.alarm], outputs: []},
-  wine_rack: {layout: 'standard', accepts: [U], outputs: ['agingDays']},
-  evaporator: {layout: 'evaporator', accepts: [U, MODULE_TYPES.evaporator], outputs: ['evaporatorRate', 'evaporatorQuality']},
+  hydroponic: {name: tl('水培系统'), layout: 'standard', accepts: [U, MODULE_TYPES.hydroponic], outputs: ['harvest']},
+  water_purifier: {name: tl('净水器'), layout: 'standard', accepts: [U], outputs: ['purifyAmount', 'purityCapQuality']},
+  furnace: {name: tl('熔炉'), layout: 'standard', accepts: [U, MODULE_TYPES.furnace], outputs: ['furnaceGrade']},
+  plant_dna_manipulator: {name: tl('DNA编辑器'), layout: 'standard', accepts: [U, MODULE_TYPES.dna], outputs: ['dnaQuality']},
+  printer: {name: tl('3D打印机'), layout: 'standard', accepts: [U, MODULE_TYPES.printer], outputs: ['printQuality']},
+  deal_maker: {name: tl('谈判专家'), layout: 'standard', accepts: [U], outputs: ['dealChance'], power: 'dealMaker'},
+  security_alarm: {name: tl('警报系统'), layout: 'standard', accepts: [U, MODULE_TYPES.alarm], outputs: ['alarmPerformance']},
+  mirage_projector: {name: tl('幻影投影仪'), layout: 'standard', accepts: [U], outputs: ['attractiveness']},
+  moisture_farm: {name: tl('水分收集器'), layout: 'standard', accepts: [U], outputs: ['moistureVolume', 'moistureGrade']},
+  desequencer: {name: tl('密码解序器'), layout: 'standard', accepts: [U, MODULE_TYPES.alarm], outputs: []},
+  wine_rack: {name: tl('催陈器'), layout: 'standard', accepts: [U], outputs: ['agingDays']},
+  evaporator: {name: tl('蒸发器'), layout: 'evaporator', accepts: [U, MODULE_TYPES.evaporator], outputs: ['evaporatorRate', 'evaporatorQuality']},
 });
 /** Fallback for unlisted machines that have the standard upgradable bay. */
 export const UNKNOWN_STANDARD_MACHINE = Object.freeze({layout: 'standard', accepts: [U], outputs: []});
@@ -99,12 +101,12 @@ export const MIN_POWER_USE = 1;
 /** Moisture farm water grade by (quality + offset): MachineMoistureFarm.GetOutputQuality; names from zh mech_condition_*. */
 export const MOISTURE_QUALITY_OFFSET = 50;
 export const MOISTURE_GRADES = Object.freeze([
-  {below: 0, name: '沟渠水'},
-  {below: 50, name: '铁锈水'},
-  {below: 100, name: '幽灵水'},
-  {below: 150, name: '基础水'},
-  {below: 200, name: '优质水'},
-  {below: Infinity, name: '纯水'},
+  {below: 0, name: tl('沟渠水')},
+  {below: 50, name: tl('铁锈水')},
+  {below: 100, name: tl('幽灵水')},
+  {below: 150, name: tl('基础水')},
+  {below: 200, name: tl('优质水')},
+  {below: Infinity, name: tl('纯水')},
 ]);
 /** Constants that appear in the machine output code. */
 export const OUTPUT_CONSTANTS = Object.freeze({

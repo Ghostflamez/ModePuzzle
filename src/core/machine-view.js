@@ -15,6 +15,7 @@ import {BAY_LAYOUTS} from '../config/machines.js';
 import {bayBoard} from './save-import.js';
 import {MODULE_KINDS} from '../config/catalog.js';
 import {MODULE_TYPES, MODULE_TYPE_BY_CATALOG_MACHINE} from '../config/machines.js';
+import {tl} from '../i18n/index.js';
 
 export const FREE = 'free';
 export const locationOf = item => item.location ?? FREE;
@@ -146,15 +147,15 @@ export const layoutIdOf = machine => machine.layoutId ?? (machine.board.w === BA
  */
 export function changeBayStage(config, key, step) {
   const machine = config.save.machines.find(m => m.key === key);
-  if (!machine) throw Error('找不到该机器');
-  if (!machine.shared) throw Error('请先解锁这台机器，再调整模组舱');
+  if (!machine) throw Error(tl('找不到该机器'));
+  if (!machine.shared) throw Error(tl('请先解锁这台机器，再调整模组舱'));
   const stages = BAY_LAYOUTS[layoutIdOf(machine)].stages.length;
   const floor = machine.originalStage ?? machine.stage;
   const stage = machine.stage + step;
-  if (stage < floor || stage >= stages) throw Error(step > 0 ? '模组舱已是最高扩建等级' : '已是存档中的扩建等级');
+  if (stage < floor || stage >= stages) throw Error(step > 0 ? tl('模组舱已是最高扩建等级') : tl('已是存档中的扩建等级'));
   const board = bayBoard(layoutIdOf(machine), stage);
   const fits = machine.layout.every(e => e.cells.every(([x, y]) => x < board.w && y < board.h && board.cells[y * board.w + x]));
-  if (!fits) throw Error('当前排布占用了将被移除的格子，无法撤回升级');
+  if (!fits) throw Error(tl('当前排布占用了将被移除的格子，无法撤回升级'));
   const machines = config.save.machines.map(m => (m.key === key ? {...m, stage, board} : m));
   return {...config, save: {...config.save, machines}};
 }
@@ -175,7 +176,7 @@ export const clearSnapshot = config => (config.save ? {...config, save: {...conf
  */
 export function confirmResult(config, placements) {
   const machine = activeMachine(config);
-  if (!machine) throw Error('没有选中的机器');
+  if (!machine) throw Error(tl('没有选中的机器'));
   const byId = new Map(config.items.map(item => [item.id, item]));
   const layout = [];
   const used = new Set();
@@ -183,7 +184,7 @@ export function confirmResult(config, placements) {
     const item = byId.get(p.itemId);
     const copy = Number(p.instance.slice(p.instance.lastIndexOf(':') + 1));
     const source = item?.sources?.[copy - 1];
-    if (source === undefined) throw Error('只能确认来自存档的模组；手动添加的模组请在游戏中自行摆放');
+    if (source === undefined) throw Error(tl('只能确认来自存档的模组；手动添加的模组请在游戏中自行摆放'));
     used.add(source);
     layout.push({source, cells: p.cells.map(c => [c % machine.board.w, Math.floor(c / machine.board.w)])});
   }

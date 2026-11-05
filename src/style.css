@@ -581,3 +581,10 @@ details li { margin: 4px 0; color: var(--muted); }
 .game-art-section input { width: 100%; }
 .game-art-row { display: flex; gap: 8px; }
 .game-art-cmd { display: block; padding: 6px 8px; background: rgba(0, 0, 0, .3); user-select: all; }
+
+/* ---------- language switch (top right, always visible) ---------- */
+.lang-switch { display: inline-flex; align-items: stretch; margin-left: 6px; border: 2px solid var(--amber); background: rgba(0, 0, 0, .35); box-shadow: 0 0 0 2px rgba(0, 0, 0, .4), 0 0 12px rgba(232, 160, 80, .35); }
+.lang-switch .lang-globe { display: grid; place-items: center; padding: 0 6px; font-size: 16px; }
+.lang-switch button { font: inherit; font-size: 15px; font-weight: bold; padding: 4px 10px; border: 0; background: transparent; color: var(--muted); cursor: pointer; }
+.lang-switch button.active { background: var(--amber); color: #2b1b10; cursor: default; }
+.lang-switch button:not(.active):hover { color: #fff; background: rgba(232, 160, 80, .25); }

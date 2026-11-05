@@ -2,6 +2,7 @@
  * Stored only in this browser / desktop app under its own key: never part of the config,
  * exports or any build. Pure functions plus a tiny storage wrapper; no DOM. */
 import {SHAPES} from '../render/module-art.js';
+import {tl} from '../i18n/index.js';
 
 export const GAME_ART_KEY = 'module-layout-game-art-v1';
 export const GAME_ART_FORMAT = 'modepuzzle-game-sprites-1';
@@ -18,11 +19,11 @@ const norm = cells => {
  * Returns {pack, used, skipped} or throws.
  */
 export function checkGameArt(raw) {
-  if (!raw || raw.format !== GAME_ART_FORMAT) throw Error('不是本工具生成的贴图包');
+  if (!raw || raw.format !== GAME_ART_FORMAT) throw Error(tl('不是本工具生成的贴图包'));
   const {alphabet, transparent, palette, sprites} = raw;
   if (typeof alphabet !== 'string' || typeof transparent !== 'string' || !Array.isArray(palette)
     || palette.length > alphabet.length || !palette.every(c => /^#[0-9a-f]{6}$/i.test(c)) || !sprites || typeof sprites !== 'object') {
-    throw Error('贴图包格式无效');
+    throw Error(tl('贴图包格式无效'));
   }
   const kept = {};
   const skipped = [];
@@ -33,7 +34,7 @@ export function checkGameArt(raw) {
     if (ok) kept[name] = {w: s.w, h: s.h, cells: s.cells, rows: s.rows};
     else skipped.push(name);
   }
-  if (!Object.keys(kept).length) throw Error('贴图包里没有可用的模组贴图');
+  if (!Object.keys(kept).length) throw Error(tl('贴图包里没有可用的模组贴图'));
   return {pack: {format: GAME_ART_FORMAT, alphabet, transparent, palette, sprites: kept}, used: Object.keys(kept).length, skipped};
 }
 

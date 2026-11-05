@@ -1,1 +1,1 @@
-{"name":"module-layout-lab","private":true,"version":"0.1.2","license":"MIT","type":"module","scripts":{"test":"node --test --test-concurrency=1 tests/*.test.js"}}
+{"name":"module-layout-lab","private":true,"version":"0.2.0","license":"MIT","type":"module","scripts":{"test":"node --test --test-concurrency=1 tests/*.test.js"}}

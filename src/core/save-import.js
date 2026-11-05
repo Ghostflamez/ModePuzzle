@@ -7,6 +7,7 @@ import {
 } from '../config/machines.js';
 import {normalize} from './engine.js';
 import {machineParams} from './machine-stats.js';
+import {tl, getLang} from '../i18n/index.js';
 
 const VALID_ESCAPES = '"\\/bfnrtu';
 
@@ -121,7 +122,7 @@ export function moduleFromSave(item) {
 export function readSave(text) {
   const root = parseLenientJson(text);
   const store = root?.playerStore?.value;
-  if (!store) throw Error('不是《深空当铺》的存档文件（找不到 playerStore）');
+  if (!store) throw Error(tl('不是《深空当铺》的存档文件（找不到 playerStore）'));
   const items = [];
   for (const key of SAVE_INVENTORIES) {
     if (typeof store[key] !== 'string') continue;
@@ -149,7 +150,7 @@ export function readSave(text) {
     const stage = tags.get(UPGRADE_STAGE_TAG)?.valueInt ?? 0;
     const custom = tags.get('CUSTOM_NAME_TAG')?.internalValueString;
     machines.set(it, {
-      key: `m${it.uniqueId}`, identifier: it.identifier, name: custom || it.name || it.identifier,
+      key: `m${it.uniqueId}`, identifier: it.identifier, name: custom || (getLang() === 'zh' ? it.name : known?.name) || it.name || it.identifier,
       layoutId: bay.layout, originalStage: stage, board: bayBoard(bay.layout, stage), accepts: [...new Set([...bay.accepts, ...(known ? [] : installedTypes)])], stage, guessed: !known,
       outputs: [...bay.outputs], power: bay.power || 'basic', params: machineParams(tags), installed: [],
     });
@@ -158,12 +159,12 @@ export function readSave(text) {
   const free = [];
   for (const it of items) {
     if (!isModule(it)) continue;
-    if (EXCLUDED_MODULE_IDS.includes(it.identifier)) { skip('化学设备模组'); continue; }
+    if (EXCLUDED_MODULE_IDS.includes(it.identifier)) { skip(tl('化学设备模组')); continue; }
     const holder = parent.get(`${it._inventory}:${it.uuid}`);
     const module = moduleFromSave(it);
     if (holder && isMachine(holder)) {
       const machine = machines.get(holder);
-      if (!machine) { skip(EXCLUDED_MACHINES.includes(holder.identifier) ? '装在化学类机器中' : '装在不支持的机器中'); continue; }
+      if (!machine) { skip(EXCLUDED_MACHINES.includes(holder.identifier) ? tl('装在化学类机器中') : tl('装在不支持的机器中')); continue; }
       machine.installed.push({module, cells: placedCells(it.itemModifiedShape)});
     } else {
       free.push(module);

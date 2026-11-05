@@ -1,18 +1,19 @@
+import {tl, getLang} from '../i18n/index.js';
 /* Interface constants: defaults, timings, presets and pixel icons. */
 
 /** Default bay: 7 × 5 with the four corners unavailable (31 cells). */
 export const DEFAULT_BOARD = Object.freeze({w: 7, h: 5, blocked: [0, 6, 28, 34]});
 
 export const SEARCH_BUDGETS = Object.freeze([
-  {seconds: 5, label: '5 秒 · 快速试排'},
-  {seconds: 15, label: '15 秒 · 标准搜索', default: true},
-  {seconds: 60, label: '60 秒 · 深入搜索'},
-  {seconds: 0, label: '不限时 · 证明最优'},
+  {seconds: 5, label: tl('5 秒 · 快速试排')},
+  {seconds: 15, label: tl('15 秒 · 标准搜索'), default: true},
+  {seconds: 60, label: tl('60 秒 · 深入搜索')},
+  {seconds: 0, label: tl('不限时 · 证明最优')},
 ]);
 
 export const TOAST_MS = 3800;
 export const OBJECT_URL_REVOKE_MS = 1000;
-export const NUMBER_FORMAT = Object.freeze({locale: 'zh-CN', maximumFractionDigits: 3, zeroBelow: 1e-10});
+export const NUMBER_FORMAT = Object.freeze({locale: getLang() === 'en' ? 'en-US' : 'zh-CN', maximumFractionDigits: 3, zeroBelow: 1e-10});
 
 /** Board rendering: official sprites use 16 px per cell; drawn at an integer multiple. */
 export const BOARD_RENDER = Object.freeze({
@@ -31,26 +32,26 @@ export const BOARD_RENDER = Object.freeze({
  * Every colour/shape pair maps to exactly one official kind.
  */
 export const PICKER_TABS = Object.freeze([
-  {id: 'red', label: '红', hint: '性能 · 超频', kinds: ['performance', 'overclock']},
-  {id: 'green', label: '绿', hint: '效率 · 环保 · 优化', kinds: ['efficiency', 'eco', 'streamlining']},
-  {id: 'yellow', label: '黄', hint: '质量 · 精炼', kinds: ['quality', 'fineness']},
-  {id: 'purple', label: '紫', hint: '神经核心', kinds: ['neuralCapped', 'neuralUncapped']},
-  {id: 'grey', label: '灰白', hint: '空白 · 损坏 · 报废', kinds: ['blank', 'corrupt', 'ruined']},
-  {id: 'hydroponic', label: '水培', hint: '水培系统专用', kinds: ['nutrifruit', 'dreamCapNeutralizer', 'nightmareCap', 'kottonLoom', 'hydroreedFilter', 'fillerweed', 'smuggler']},
-  {id: 'machine', label: '其他机器', hint: '打印机 · DNA编辑器 · 蒸发器 · 熔炉 · 警报器', kinds: ['metalPrinting', 'cnc', 'meleeBatch', 'dnaStabilizer', 'dnaPositiveFilter', 'dnaNegativeFilter', 'dnaPrecision', 'solventRecovery', 'furnaceJunk', 'furnaceBlast', 'alarmTransmitter']},
-  {id: 'node', label: '节点', hint: '辅助节点', kinds: ['nodeMedium', 'nodeSmall']},
-  {id: 'unofficial', label: '自绘', hint: '非官方形状，以占位样式显示', kinds: []},
+  {id: 'red', label: tl('红'), hint: tl('性能 · 超频'), kinds: ['performance', 'overclock']},
+  {id: 'green', label: tl('绿'), hint: tl('效率 · 环保 · 优化'), kinds: ['efficiency', 'eco', 'streamlining']},
+  {id: 'yellow', label: tl('黄'), hint: tl('质量 · 精炼'), kinds: ['quality', 'fineness']},
+  {id: 'purple', label: tl('紫'), hint: tl('神经核心'), kinds: ['neuralCapped', 'neuralUncapped']},
+  {id: 'grey', label: tl('灰白'), hint: tl('空白 · 损坏 · 报废'), kinds: ['blank', 'corrupt', 'ruined']},
+  {id: 'hydroponic', label: tl('水培'), hint: tl('水培系统专用'), kinds: ['nutrifruit', 'dreamCapNeutralizer', 'nightmareCap', 'kottonLoom', 'hydroreedFilter', 'fillerweed', 'smuggler']},
+  {id: 'machine', label: tl('其他机器'), hint: tl('打印机 · DNA编辑器 · 蒸发器 · 熔炉 · 警报器'), kinds: ['metalPrinting', 'cnc', 'meleeBatch', 'dnaStabilizer', 'dnaPositiveFilter', 'dnaNegativeFilter', 'dnaPrecision', 'solventRecovery', 'furnaceJunk', 'furnaceBlast', 'alarmTransmitter']},
+  {id: 'node', label: tl('节点'), hint: tl('辅助节点'), kinds: ['nodeMedium', 'nodeSmall']},
+  {id: 'unofficial', label: tl('自绘'), hint: tl('非官方形状，以占位样式显示'), kinds: []},
 ]);
 
 /** Readable shape names, matched in any rotation or mirror. */
 export const SHAPE_NAMES = Object.freeze([
-  {name: '3格折角', cells: [[0, 0], [1, 0], [1, 1]]},
-  {name: '方形', cells: [[0, 0], [1, 0], [0, 1], [1, 1]]},
-  {name: '4格L', cells: [[0, 0], [1, 0], [2, 0], [2, 1]]},
-  {name: 'T形', cells: [[1, 0], [0, 1], [1, 1], [1, 2]]},
-  {name: 'P形', cells: [[0, 0], [1, 0], [0, 1], [1, 1], [1, 2]]},
-  {name: 'C形', cells: [[0, 0], [1, 0], [1, 1], [0, 2], [1, 2]]},
-  {name: '1×4长条', cells: [[0, 0], [0, 1], [0, 2], [0, 3]]},
+  {name: tl('3格折角'), cells: [[0, 0], [1, 0], [1, 1]]},
+  {name: tl('方形'), cells: [[0, 0], [1, 0], [0, 1], [1, 1]]},
+  {name: tl('4格L'), cells: [[0, 0], [1, 0], [2, 0], [2, 1]]},
+  {name: tl('T形'), cells: [[1, 0], [0, 1], [1, 1], [1, 2]]},
+  {name: tl('P形'), cells: [[0, 0], [1, 0], [0, 1], [1, 1], [1, 2]]},
+  {name: tl('C形'), cells: [[0, 0], [1, 0], [1, 1], [0, 2], [1, 2]]},
+  {name: tl('1×4长条'), cells: [[0, 0], [0, 1], [0, 2], [0, 3]]},
   {name: '1×2', cells: [[0, 0], [0, 1]]},
   {name: '1×1', cells: [[0, 0]]},
 ]);
@@ -70,10 +71,10 @@ export const FILES = Object.freeze({
 
 /** Example inventory for 加载演示数据 (official kinds with template values). */
 export const DEMO_ITEMS = Object.freeze([
-  {id: 'demo-a', name: '效率模组', kind: 'efficiency', type: 'module', shape: [[0, 0], [1, 0], [2, 0], [2, 1]], base: [16, 0, 0], traits: ['left', 'receiver'], qty: 2},
-  {id: 'demo-b', name: '精炼模组', kind: 'fineness', type: 'module', shape: [[0, 0], [1, 0], [0, 1], [1, 1], [1, 2]], base: [-15, 25, -8], traits: ['top', 'negative'], qty: 1},
-  {id: 'demo-c', name: '超频模组', kind: 'overclock', type: 'module', shape: [[0, 0], [1, 0], [1, 1], [0, 2], [1, 2]], base: [-44, 0, 36], traits: ['receiver'], qty: 1},
-  {id: 'demo-node', name: '节点（中）', kind: 'nodeMedium', type: 'node', shape: [[0, 0], [1, 0]], base: [0, 0, 0], traits: [], qty: 4},
+  {id: 'demo-a', name: tl('效率模组'), kind: 'efficiency', type: 'module', shape: [[0, 0], [1, 0], [2, 0], [2, 1]], base: [16, 0, 0], traits: ['left', 'receiver'], qty: 2},
+  {id: 'demo-b', name: tl('精炼模组'), kind: 'fineness', type: 'module', shape: [[0, 0], [1, 0], [0, 1], [1, 1], [1, 2]], base: [-15, 25, -8], traits: ['top', 'negative'], qty: 1},
+  {id: 'demo-c', name: tl('超频模组'), kind: 'overclock', type: 'module', shape: [[0, 0], [1, 0], [1, 1], [0, 2], [1, 2]], base: [-44, 0, 36], traits: ['receiver'], qty: 1},
+  {id: 'demo-node', name: tl('节点（中）'), kind: 'nodeMedium', type: 'node', shape: [[0, 0], [1, 0]], base: [0, 0, 0], traits: [], qty: 4},
 ]);
 
 /**

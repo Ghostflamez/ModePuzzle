@@ -1,5 +1,6 @@
 /* Name matching against the official catalogue. Pure functions, no DOM.
- * A user-entered name that matches an official name or alias identifies the kind;
+ * A user-entered name that matches an official name (Chinese or the current language) or alias
+ * identifies the kind;
  * the display name is always the official one and the entered name becomes a tag. */
 import {MODULE_KINDS, PLACEHOLDER} from '../config/catalog.js';
 
@@ -17,7 +18,10 @@ const termsCache = new Map();
 function terms(kindId) {
   if (!termsCache.has(kindId)) {
     const kind = MODULE_KINDS[kindId];
-    termsCache.set(kindId, [kind.name, ...(kind.aliases || [])].map(normalizeName).filter(Boolean));
+    // Display name (current language), the Chinese name and aliases, and the display name without
+    // "module" so English users can type "Overclock" as Chinese users type 超频.
+    const short = normalizeName(kind.name).replace(/module$/, '');
+    termsCache.set(kindId, [kind.name, kind.zhName, short, ...(kind.aliases || [])].map(normalizeName).filter(Boolean));
   }
   return termsCache.get(kindId);
 }

@@ -7,6 +7,7 @@ import {
 } from '../config/game-rules.js';
 import {MODULE_KINDS, UNOFFICIAL_KIND} from '../config/catalog.js';
 import {SEARCH} from '../config/search.js';
+import {tl} from '../i18n/index.js';
 
 export {METRICS, SCORING_VERSION, SELECTION_VERSION, TYPE_RULES};
 /** Kept under its historical name for callers and tests. */
@@ -76,76 +77,76 @@ function validateBoard(board) {
   const sideOk = v => Number.isInteger(v) && v >= LIMITS.boardMinSide && v <= LIMITS.boardMaxSide;
   if (!board || !sideOk(board.w) || !sideOk(board.h) || !Array.isArray(board.cells) || board.cells.length !== board.w * board.h
     || board.cells.some(v => typeof v !== 'boolean') || !board.cells.some(Boolean)) {
-    throw Error(`插槽需要 ${LIMITS.boardMinSide}–${LIMITS.boardMaxSide} 行列，且至少有一个可用格`);
+    throw Error(tl('插槽需要 {0}–{1} 行列，且至少有一个可用格', LIMITS.boardMinSide, LIMITS.boardMaxSide));
   }
 }
 
 function validateItem(item, ids) {
   if (!item || typeof item.id !== 'string' || ids.has(item.id) || typeof item.name !== 'string'
     || item.name.length > LIMITS.maxNameLength || !TYPE_RULES[item.type]) {
-    throw Error('插入件名称、类型或 ID 无效');
+    throw Error(tl('插入件名称、类型或 ID 无效'));
   }
   ids.add(item.id);
   const side = LIMITS.shapeEditorSide;
   if (!Array.isArray(item.shape) || item.shape.length > LIMITS.maxShapeCells
     || item.shape.some(c => !Array.isArray(c) || c.length !== 2 || c.some(v => !Number.isInteger(v) || v < 0 || v >= side))
     || !connected(item.shape)) {
-    throw Error(`${item.name}：形状必须是 ${side}×${side} 内共边相连的格子`);
+    throw Error(tl('{0}：形状必须是 {1}×{2} 内共边相连的格子', item.name, side, side));
   }
-  if (item.type === 'node' && !isNodeShape(item.shape)) throw Error('节点只能是官方的 1×2（中）或 1×1（小）形状');
+  if (item.type === 'node' && !isNodeShape(item.shape)) throw Error(tl('节点只能是官方的 1×2（中）或 1×1（小）形状'));
   if (!Array.isArray(item.base) || item.base.length !== METRICS.length
     || item.base.some(v => !Number.isFinite(v) || Math.abs(v) > LIMITS.maxAbsBaseValue)) {
-    throw Error(`属性必须为 -${LIMITS.maxAbsBaseValue} 到 ${LIMITS.maxAbsBaseValue} 之间的数值`);
+    throw Error(tl('属性必须为 -{0} 到 {1} 之间的数值', LIMITS.maxAbsBaseValue, LIMITS.maxAbsBaseValue));
   }
   if (!Array.isArray(item.traits) || new Set(item.traits).size !== item.traits.length
     || item.traits.some(t => !TRAITS[t]) || (item.type === 'node' && item.traits.length)) {
-    throw Error('存在无效词条');
+    throw Error(tl('存在无效词条'));
   }
   if (!Number.isInteger(item.qty) || item.qty < 1 || item.qty > LIMITS.maxStackQuantity) {
-    throw Error(`每个堆叠数量需为 1–${LIMITS.maxStackQuantity}`);
+    throw Error(tl('每个堆叠数量需为 1–{0}', LIMITS.maxStackQuantity));
   }
-  if (item.required !== undefined && typeof item.required !== 'boolean') throw Error('必须添加标记需为布尔值');
-  if (item.locked !== undefined && typeof item.locked !== 'boolean') throw Error('锁定标记需为布尔值');
-  if (item.locked && item.required) throw Error('同一件不能同时必选和锁定排除');
+  if (item.required !== undefined && typeof item.required !== 'boolean') throw Error(tl('必须添加标记需为布尔值'));
+  if (item.locked !== undefined && typeof item.locked !== 'boolean') throw Error(tl('锁定标记需为布尔值'));
+  if (item.locked && item.required) throw Error(tl('同一件不能同时必选和锁定排除'));
   const kindOk = item.kind === undefined || (item.kind === UNOFFICIAL_KIND ? item.type === 'module' : MODULE_KINDS[item.kind]?.type === item.type);
   if (!kindOk) {
-    throw Error(`${item.name}：未知的官方模组种类`);
+    throw Error(tl('{0}：未知的官方模组种类', item.name));
   }
   if (item.learnCap !== undefined && (!item.traits?.includes('learning') || !Array.isArray(item.learnCap) || item.learnCap.length !== METRICS.length
     || item.learnCap.some(v => !Number.isFinite(v) || v < 0 || v > LIMITS.maxAbsBaseValue))) {
-    throw Error(`${item.name}：自学习上限无效`);
+    throw Error(tl('{0}：自学习上限无效', item.name));
   }
   if (item.aliases !== undefined && (!Array.isArray(item.aliases)
     || item.aliases.some(n => typeof n !== 'string' || n.length > LIMITS.maxNameLength))) {
-    throw Error('历史名称无效');
+    throw Error(tl('历史名称无效'));
   }
 }
 
 function validateRules(rules) {
   if (!rules || !RULE_EDGE_MODES.includes(rules.edge) || !RULE_STACK_MODES.includes(rules.stack)
     || RULE_PERCENT_KEYS.some(k => !isPercent(rules[k]))) {
-    throw Error('规则设置无效');
+    throw Error(tl('规则设置无效'));
   }
 }
 
 export function validate(config) {
-  if (!config || config.version !== SCHEMA_VERSION) throw Error(`配置版本不受支持（需要 version: ${SCHEMA_VERSION}）`);
+  if (!config || config.version !== SCHEMA_VERSION) throw Error(tl('配置版本不受支持（需要 version: {0}）', SCHEMA_VERSION));
   validateBoard(config.board);
   const {items} = config;
-  if (!Array.isArray(items) || items.length > LIMITS.maxStacks) throw Error(`最多支持 ${LIMITS.maxStacks} 个堆叠条目`);
+  if (!Array.isArray(items) || items.length > LIMITS.maxStacks) throw Error(tl('最多支持 {0} 个堆叠条目', LIMITS.maxStacks));
   const ids = new Set();
   let count = 0;
   for (const item of items) {
     validateItem(item, ids);
     count += item.qty;
   }
-  if (count > LIMITS.maxTotalQuantity) throw Error(`候选件库存总数量不能超过 ${LIMITS.maxTotalQuantity}`);
+  if (count > LIMITS.maxTotalQuantity) throw Error(tl('候选件库存总数量不能超过 {0}', LIMITS.maxTotalQuantity));
   validateRules(config.rules);
   const targetOk = config.target === 'custom' || (Number.isInteger(config.target) && config.target >= 0 && config.target < METRICS.length);
-  if (typeof config.optional !== 'boolean' || !targetOk) throw Error('目标属性或冗余设置无效');
+  if (typeof config.optional !== 'boolean' || !targetOk) throw Error(tl('目标属性或冗余设置无效'));
   if (config.custom !== undefined) validateCustom(config.custom);
   if (config.nextAutoName !== undefined && (!Number.isSafeInteger(config.nextAutoName) || config.nextAutoName < 1)) {
-    throw Error('自动名称编号无效');
+    throw Error(tl('自动名称编号无效'));
   }
   resolveLockedPlacements(config);
   return config;
@@ -194,7 +195,7 @@ export function generatePlacements(board, item) {
 export function resolveLockedPlacements(config) {
   const locks = config.lockedPlacements;
   if (locks === undefined) return [];
-  if (!Array.isArray(locks) || locks.length > LIMITS.maxLockedPlacements) throw Error('锁定布局格式无效');
+  if (!Array.isArray(locks) || locks.length > LIMITS.maxLockedPlacements) throw Error(tl('锁定布局格式无效'));
   const items = new Map(config.items.map(a => [a.id, a]));
   const cache = new Map();
   const seen = new Set();
@@ -204,18 +205,18 @@ export function resolveLockedPlacements(config) {
     const item = items.get(lock?.itemId);
     const instances = item ? Array.from({length: item.qty}, (_, i) => `${item.id}:${i + 1}`) : [];
     if (!item || !instances.includes(lock.instance) || seen.has(lock.instance)) {
-      throw Error('锁定插入件不存在、数量不足或重复，请先解除锁定');
+      throw Error(tl('锁定插入件不存在、数量不足或重复，请先解除锁定'));
     }
     if (!Array.isArray(lock.cells) || lock.cells.length !== item.shape.length || new Set(lock.cells).size !== lock.cells.length
       || lock.cells.some(c => !Number.isInteger(c) || c < 0 || c >= config.board.cells.length || !config.board.cells[c])) {
-      throw Error('锁定格子无效，请先解除锁定');
+      throw Error(tl('锁定格子无效，请先解除锁定'));
     }
     if (!cache.has(item.id)) cache.set(item.id, generatePlacements(config.board, item));
     const mask = lock.cells.reduce((m, c) => m | (1n << BigInt(c)), 0n);
     const p = cache.get(item.id).find(q => q.mask === mask
       && (lock.rotation === undefined || q.rotation === lock.rotation)
       && (lock.flipped === undefined || q.flipped === lock.flipped));
-    if (!p || (occupied & mask)) throw Error('锁定插入件的形状、朝向或重叠状态无效，请先解除锁定');
+    if (!p || (occupied & mask)) throw Error(tl('锁定插入件的形状、朝向或重叠状态无效，请先解除锁定'));
     occupied |= mask;
     seen.add(lock.instance);
     out.push({item, p, instance: lock.instance});
@@ -376,26 +377,26 @@ export function hedgeSummary(items) {
 }
 
 export function validateCustom(custom) {
-  if (!custom || !Array.isArray(custom.bounds) || custom.bounds.length !== METRICS.length) throw Error('自定义目标需要三项属性范围');
+  if (!custom || !Array.isArray(custom.bounds) || custom.bounds.length !== METRICS.length) throw Error(tl('自定义目标需要三项属性范围'));
   for (const k of AXES) {
     const b = custom.bounds[k];
     const bad = key => b[key] !== null && (!Number.isFinite(b[key]) || Math.abs(b[key]) > LIMITS.maxAbsBound);
     // `tolerance` is a retired field from older saves: accepted, ignored and removed on migration.
     if (!b || (b.tolerance !== undefined && typeof b.tolerance !== 'boolean') || ['min', 'max'].some(bad)) {
-      throw Error(`${METRICS[k]}范围需为空或有效数字（绝对值不超过 ${LIMITS.maxAbsBound}）`);
+      throw Error(tl('{0}范围需为空或有效数字（绝对值不超过 {1}）', METRICS[k], LIMITS.maxAbsBound));
     }
-    if (b.min !== null && b.max !== null && b.min > b.max) throw Error(`${METRICS[k]}下界不能高于上界`);
+    if (b.min !== null && b.max !== null && b.min > b.max) throw Error(tl('{0}下界不能高于上界', METRICS[k]));
     if (b.match !== undefined) {
       if (!MATCH_MODES[b.match] || !(b.center === null || (Number.isFinite(b.center) && Math.abs(b.center) <= LIMITS.maxAbsBound))) {
-        throw Error(`${METRICS[k]}的匹配设置无效`);
+        throw Error(tl('{0}的匹配设置无效', METRICS[k]));
       }
       const derived = boundsFromMatch(b.match, b.center);
-      if (derived.min !== b.min || derived.max !== b.max) throw Error(`${METRICS[k]}的上下界与匹配中间值不一致`);
+      if (derived.min !== b.min || derived.max !== b.max) throw Error(tl('{0}的上下界与匹配中间值不一致', METRICS[k]));
     }
   }
   const axisOk = v => Number.isInteger(v) && v >= 0 && v < METRICS.length;
   if (!axisOk(custom.primary) || !(custom.secondary === null || axisOk(custom.secondary)) || custom.primary === custom.secondary) {
-    throw Error('首要、次要优先属性不能相同');
+    throw Error(tl('首要、次要优先属性不能相同'));
   }
   return custom;
 }
@@ -477,7 +478,7 @@ export const searchQuantity = config => config.items.filter(item => !item.locked
 export function solve(input, {limitMs = SEARCH.defaultLimitMs, onProgress = () => {}, now = () => performance.now(), random = Math.random} = {}) {
   const config = migrateConfig(input);
   if (searchQuantity(config) > LIMITS.maxSearchQuantity) {
-    throw Error(`参与本次优化的候选件不能超过 ${LIMITS.maxSearchQuantity} 件（当前 ${searchQuantity(config)} 件），请锁定排除一部分`);
+    throw Error(tl('参与本次优化的候选件不能超过 {0} 件（当前 {1} 件），请锁定排除一部分', LIMITS.maxSearchQuantity, searchQuantity(config)));
   }
   const start = now();
   const rules = config.rules;
@@ -556,7 +557,7 @@ export function solve(input, {limitMs = SEARCH.defaultLimitMs, onProgress = () =
   const pm = pieces.map(a => pieces.map(b => pairLimits(a, b)));
   const uiLayout = l => l.map(a => ({item: a.item, p: a.p, instance: a.instance}));
 
-  const result = (done = false, phase = '精确搜索') => ({
+  const result = (done = false, phase = tl('精确搜索')) => ({
     done, phase, scoringVersion: SCORING_VERSION, custom, primary, secondary,
     feasible: bestLayout !== null,
     best: bestTotals ? bestTotals[primary] : null,
@@ -621,7 +622,7 @@ export function solve(input, {limitMs = SEARCH.defaultLimitMs, onProgress = () =
   rootBounds = bounds(all, [], capacity, AXES.map(() => 0));
   if (config.optional) save([], AXES.map(() => 0));
   if (pieces.filter(p => p.required).reduce((s, p) => s + p.area, 0) > capacity || pieces.some(p => p.required && !p.placements.length)) {
-    return result(true, '不可行');
+    return result(true, tl('不可行'));
   }
 
   /** Can a completion of this branch still beat the best layout? Risk only grows as pieces are added. */
@@ -638,7 +639,7 @@ export function solve(input, {limitMs = SEARCH.defaultLimitMs, onProgress = () =
     if (second > bestTotals[secondary] + EPSILON) return true;
     return second >= bestTotals[secondary] - EPSILON && fewerRisk;
   }
-  if (!viable(rootBounds)) return result(true, '搜索完成');
+  if (!viable(rootBounds)) return result(true, tl('搜索完成'));
 
   // Each placed piece carries its exact per-channel sums in `acc`; a new neighbour
   // changes a piece's score by the difference of the truncated sums.
@@ -749,7 +750,7 @@ export function solve(input, {limitMs = SEARCH.defaultLimitMs, onProgress = () =
     iteration++;
     visits++;
     if (now() - lastReport > SEARCH.progressIntervalMs) {
-      onProgress(result(false, '快速寻找可行解'));
+      onProgress(result(false, tl('快速寻找可行解')));
       lastReport = now();
     }
   }
@@ -816,5 +817,5 @@ export function solve(input, {limitMs = SEARCH.defaultLimitMs, onProgress = () =
     }
   }
   if (!expired) dfs(0, 0n, 0, AXES.map(() => 0));
-  return result(true, expired ? '已到时间上限' : '搜索完成');
+  return result(true, expired ? tl('已到时间上限') : tl('搜索完成'));
 }

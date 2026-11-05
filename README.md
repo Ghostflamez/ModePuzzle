@@ -1,4 +1,6 @@
-# 模组拼合实验室
+# 模组拼合实验室 · ModePuzzle
+
+**English:** see [README.en.md](README.en.md). 界面支持中文 / English，右上角切换。
 
 > **非官方粉丝工具**，与 Questing Goose Studio 及《Probably Stolen》（深空当铺：可能是偷的）官方无关。不包含任何游戏素材：模组像素画为原创，说明文字自行撰写，仅沿用游戏中的名词。代码以 [MIT](LICENSE) 许可发布；界面字体的许可见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
 
@@ -60,6 +62,14 @@ python scripts/build_exe.py                   # 生成 release/ModePuzzle-v<版�
 - 记 Z(x) 为向零取整。模组 = b + Z(0.2b)·L + Z(0.2b)·T + Z(0.1b·N) + Z(0.25·Σ相邻负基础值)；节点 = Z(0.2·Σ相邻模组基础值)。例：b = 48 同时触发两个挂载 → 48 + 9 + 9 = 66（而不是合并 40% 的 67）。
 - 用游戏截图核对过的 9 件布局（效率 −296、性能 +266）作为回归测试保留。
 - 明细和 JSON 中：`absorbed` 为吸收收益，`receiver` 为接收器收益（`receiverNodes` 个节点，`receiverRate` 为合计百分比），`neighbour = absorbed + receiver`。导出以 `scoringVersion: "game-integer-v5"` 标识，旧结果需重新计算，录入数据不变。
+
+## 界面语言（中文 / English）
+
+- 右上角的语言开关切换中文与英文，选择会被记住（也可在网址后加 `?lang=en` / `?lang=zh`）。
+- 实现：所有界面文字用中文原文作键，经 `tl()`（`src/i18n/index.js`）查 `src/i18n/en.js` 得到英文；`index.html` 的静态文字在启动时整体替换。切换语言会重新载入页面。
+- 英文中的游戏名词（模组、词条、机器、水质等）取自游戏自带的英文本地化表；说明性文字为本项目自行撰写的英文。导入中文存档后，机器名会按游戏英文名显示（玩家自定义的名字保持不变）。
+- 字体：游戏在中文与英文下对应的角色都用 WDXL Lubrifont（英文另有 Tektur 等），本工具两种语言都用同一款 WDXL Lubrifont SC（含拉丁字母）与 Mx437 Tandy2K，许可不变。
+- 新增界面文字时：写中文原文并包上 `tl()`，同时在 `en.js` 加英文；`tests/i18n.test.js` 会检查遗漏。
 
 ## 目录结构与配置
 

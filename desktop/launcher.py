@@ -157,13 +157,13 @@ def main() -> None:
         return
     mutex = single_instance()
     if mutex is None:
-        message(f'{APP_NAME} 已经在运行，请切换到已打开的窗口。')
+        message(f'{APP_NAME} 已经在运行，请切换到已打开的窗口。\nModePuzzle is already running; switch to its window.')
         return
     os.makedirs(WEBVIEW_DIR, exist_ok=True)
     port = free_port()
     webview.settings['ALLOW_DOWNLOADS'] = True   # 导出配置 / 导出结果 open a save dialog
     api = Api(FileStorage(STORAGE_FILE))
-    api._window = webview.create_window(f'{APP_NAME} v{APP_VERSION}', url=resource('app.html'), js_api=api,
+    api._window = webview.create_window(f'ModePuzzle · {APP_NAME} v{APP_VERSION}', url=resource('app.html'), js_api=api,
                                        width=1440, height=920, min_size=(900, 600))
     webview.start(gui='edgechromium', private_mode=False, storage_path=WEBVIEW_DIR, http_port=port)
 
