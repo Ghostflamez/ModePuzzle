@@ -311,7 +311,6 @@ function itemCard(item, selected) {
     card.append(el('div', {class: 'card-warning', title: TRAITS[t].note}, [pixelIcon('warning', 1, {ink: '--chip-ink', accent: '--warn-accent'}), `${TRAITS[t].name}：${TRAITS[t].warning}`]));
   }
   for (const problem of traitConflicts(item.traits)) card.append(el('div', {class: 'card-warning soft', text: problem}));
-  if (item.traits.some(id => TRAITS[id]?.evolving)) card.append(learningEditor(item));
   const lockAction = el('button', {
     class: 'btn btn-small' + (item.locked ? ' btn-orange' : ''), text: item.locked ? '解锁一个' : '锁定一个',
     'aria-label': `${itemLabel(item)}：${item.locked ? '解锁一个' : '锁定一个'}`,
@@ -387,43 +386,6 @@ function matchesFilter(item) {
 }
 
 const filterActive = () => filter.text.trim() !== '' || filter.group !== 'all' || filter.trait !== 'all' || filter.state !== 'all';
-
-/** Quick value editor for 自学习算法 modules, whose base grows with use. */
-function learningEditor(item) {
-  const t = TRAITS[item.traits.find(id => TRAITS[id]?.evolving)];
-  const inputs = AXES.map(k => el('input', {type: 'number', step: 'any', value: item.base[k], min: -LIMITS.maxAbsBaseValue, max: LIMITS.maxAbsBaseValue,
-    'aria-label': `${itemLabel(item)} 当前${METRICS[k]}`}));
-  // Growth caps come from the save; they decide whether this module can still hedge 退化.
-  const caps = AXES.map(k => el('input', {type: 'number', step: 'any', min: 0, max: LIMITS.maxAbsBaseValue, value: item.learnCap?.[k] ?? '',
-    placeholder: '未知', 'aria-label': `${itemLabel(item)} ${METRICS[k]}成长上限`}));
-  const save = el('button', {type: 'button', class: 'btn btn-small btn-green', text: '更新', onclick: () => {
-    if (worker) return;
-    try {
-      const next = structuredClone(config);
-      const target = next.items.find(i => i.id === item.id);
-      target.base = inputs.map(input => Number(input.value));
-      const capValues = caps.map(input => (input.value.trim() === '' ? null : Number(input.value)));
-      if (capValues.every(v => v === null)) delete target.learnCap;
-      else if (capValues.some(v => v === null)) throw Error('成长上限要么三项都填，要么都留空');
-      else target.learnCap = capValues;
-      validate(next);
-      config = next;
-      invalidate();
-      toast(`已更新「${itemLabel(target)}」的数值${item.qty > 1 ? `（同堆叠 ${item.qty} 件一起更新）` : ''}`);
-    } catch (e) { toast(e.message); }
-  }});
-  [...inputs, ...caps].forEach(input => { input.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); save.click(); } }; });
-  const full = item.learnCap && AXES.every(k => item.base[k] >= item.learnCap[k]);
-  const capNote = !item.learnCap ? '成长上限未知（重新读取存档可获得），不参与退化对冲'
-    : full ? '已达成长上限，不再增长，不参与退化对冲'
-      : `仍在增长：${AXES.filter(k => item.base[k] < item.learnCap[k]).map(k => METRICS[k]).join('、')}；同分时优先用来对冲同属性的退化`;
-  return el('div', {class: 'learning-edit', title: t.note}, [
-    el('div', {class: 'learning-tip'}, [pixelIcon(t.icon, 1, {ink: '--chip-ink', accent: '--tip-accent'}), `${t.name}：${t.tip}`]),
-    el('div', {class: 'learning-inputs'}, [el('span', {class: 'learning-row-label', text: '当前'}), ...inputs.map((input, k) => el('label', {}, [METRICS[k], input])), save]),
-    el('div', {class: 'learning-inputs'}, [el('span', {class: 'learning-row-label', text: '上限'}), ...caps.map((input, k) => el('label', {}, [METRICS[k], input]))]),
-    el('div', {class: 'learning-cap-note' + (item.learnCap && !full ? '' : ' muted'), text: capNote}),
-  ]);
-}
 
 function renderItems() {
   const machine = activeMachine(config);

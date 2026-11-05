@@ -117,8 +117,7 @@ export const TRAITS = Object.freeze({
     incompatible: ['degrading', 'overvolted', 'premium', 'inferior', 'negative'],
     name: '自学习算法',
     description: '出厂时正向属性归零，之后每运行一次增长 {learn} 点，直到上限。',
-    note: '正向属性从 0 开始随使用增长，上限为生成时数值的 2 倍；为负的属性每次使用也 +1，直至 0。数值会变化，请按游戏内当前值更新。优化时同分优先用它对冲同属性的退化。',
-    tip: '数值随使用增长，可在此直接更新为游戏内当前值',
+    note: '正向属性从 0 开始随使用增长，上限为生成时数值的 2 倍；为负的属性每次使用也 +1，直至 0。数值会随使用变化，重新导入存档即可得到最新值。优化时同分优先用它对冲同属性的退化。',
     icon: 'learning',
   },
 });

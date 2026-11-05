@@ -496,11 +496,6 @@ details li { margin: 4px 0; color: var(--muted); }
 .trait-learning { --c: #2d5f7d; --c-hi: #4f8fb3; }
 .card-warning { display: flex; align-items: center; gap: 6px; margin: 4px 0; padding: 3px 8px; background: #f0d27a; color: #3a2a08; font-size: 14px; border-left: 4px solid #b5651d; }
 .card-warning.soft { background: #d9d3bf; border-left-color: #7b6f4c; color: #3a352a; }
-.learning-edit { margin: 6px 0; padding: 6px 8px; background: #b9cbd3; border-left: 4px solid #2d5f7d; color: #1d2b33; }
-.learning-tip { display: flex; align-items: center; gap: 6px; font-size: 14px; }
-.learning-inputs { display: grid; grid-template-columns: repeat(3, 1fr) auto; gap: 6px; align-items: end; margin-top: 4px; }
-.learning-inputs label { display: flex; flex-direction: column; font-size: 13px; }
-.learning-inputs input { width: 100%; min-width: 0; background: #f2f5f6; color: #1d2b33; border: 2px solid #2d5f7d; padding: 2px 6px; font-size: 16px; font-weight: bold; font-variant-numeric: tabular-nums; }
 .trait-group-label { margin: 8px 0 2px; color: var(--muted); font-size: 14px; border-top: 2px dashed #4d4a52; padding-top: 6px; }
 .trait-option:has(input:disabled) { opacity: .45; cursor: not-allowed; }
 .result-warning { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 10px; padding: 8px 10px; background: #f0d27a; color: #3a2a08; border-left: 6px solid #b5651d; }
@@ -575,8 +570,6 @@ details li { margin: 4px 0; color: var(--muted); }
 .bay-upgrade { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 14px; }
 
 /* ---------- 自学习 caps / 退化 hedge ---------- */
-.learning-row-label { font-size: 12px; color: var(--muted); align-self: end; padding-bottom: 6px; }
-.learning-cap-note { font-size: 12px; margin-top: 4px; }
 .result-hedge { display: flex; gap: 8px; align-items: flex-start; padding: 8px 10px; margin-bottom: 10px; border: 2px solid #4f8f6a; background: rgba(79, 143, 106, .14); }
 .result-hedge.partial { border-color: #c08a3a; background: rgba(192, 138, 58, .14); }
 
