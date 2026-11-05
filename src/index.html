@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>模组拼合实验室</title>
+<meta name="description" content="深空当铺模组舱布局优化：录入模组，搜索效率、质量或性能最高的拼合方式。">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="terminal-bar">
+  <div class="brand">
+    <span class="brand-plate"><canvas id="brand-icon" width="36" height="36" aria-hidden="true"></canvas></span>
+    <div>
+      <strong>模组拼合实验室</strong>
+      <span class="brand-sub">深空当铺 · 模组舱调校终端 <span class="latin">MODULE BAY TUNER</span></span>
+    </div>
+  </div>
+  <div class="header-actions">
+    <span id="save-state" class="lcd">自动保存在此浏览器</span>
+    <button id="save-import-btn" class="btn btn-orange" title="读取游戏存档 save_N.es3 —— 只读，不会修改或写回存档">导入游戏存档（只读）</button>
+    <input type="file" id="save-file" accept=".es3" hidden>
+    <button id="import-btn" class="btn">导入配置</button>
+    <button id="export-btn" class="btn">导出配置</button>
+    <input type="file" id="import-file" accept=".json,application/json" hidden>
+  </div>
+</header>
+
+<main>
+  <section class="notice-board">
+    <div class="crt-sign">
+      <div class="crt-text">
+        <span class="latin">DOWNTOWN · DECK B</span>
+        <h1>每一格舱位都值钱。</h1>
+        <p>录入手头的模组，选好要堆的属性，让终端替你把它们拼进模组舱。</p>
+      </div>
+      <ol class="crt-steps" aria-label="使用步骤">
+        <li><b>1</b>录入候选件</li>
+        <li><b>2</b>选择优化目标</li>
+        <li><b>3</b>开始优化</li>
+      </ol>
+      <button id="demo-btn" class="btn btn-ghost crt-action">加载演示数据</button>
+    </div>
+  </section>
+
+  <div class="workspace">
+    <aside class="window inventory">
+      <div class="window-bar"><h2>候选插入件</h2><span class="latin">INVENTORY</span><span id="inventory-count" class="pill"></span></div>
+      <div class="window-body">
+        <p class="hint">必选＝必须用到；锁定＝优化时排除。种类、形状、属性、词条与状态都相同的条目会自动堆叠。</p>
+        <div id="legacy-selection-note" class="paper-note" hidden>
+          <p>旧版曾混用必选与锁定。无法区分的旧标记已保留为必选，请核对卡片；要排除时请点「锁定一个」。</p>
+          <button id="review-selection" class="btn btn-small">已核对</button>
+        </div>
+        <div id="inferred-note" class="paper-note" hidden>
+          <p>部分条目来自旧版，没有记录官方种类：名称能对上官方名称或简称的按名称识别（标「名称匹配」），其余按形状与属性推断（标「推断」）。可逐个编辑确认，或一键写入。</p>
+          <button id="confirm-kinds" class="btn btn-small">全部确认并写入种类</button>
+        </div>
+        <div class="add-row">
+          <button id="add-module" class="btn btn-green">＋ 添加模组</button>
+          <button id="add-node" class="btn">＋ 添加节点</button>
+        </div>
+        <div class="inventory-filter" role="search">
+          <input id="filter-text" type="search" placeholder="搜索名称、标签、种类、词条或效果" aria-label="搜索候选插入件">
+          <div class="filter-selects">
+            <select id="filter-group" aria-label="按分类筛选"></select>
+            <select id="filter-trait" aria-label="按词条筛选"></select>
+            <select id="filter-state" aria-label="按状态筛选"></select>
+          </div>
+          <div class="filter-foot"><span id="filter-count"></span><button id="filter-reset" class="btn btn-small" hidden>清除筛选</button></div>
+        </div>
+        <div id="items"></div>
+        <div id="filter-empty" class="empty" hidden>没有符合筛选条件的条目</div>
+        <div id="inventory-empty" class="empty">从「添加模组」开始<br><small>选官方种类，再填入三项初始属性。</small></div>
+        <p class="foot-note">录入数据只保存在当前浏览器，可导出 JSON 备份。</p>
+      </div>
+    </aside>
+
+    <section class="main-column">
+      <div id="save-window" class="window save-window" hidden>
+        <div class="window-bar"><h2>游戏存档</h2><span class="latin">SAVE</span><span id="save-meta" class="pill"></span>
+          <button id="leave-machine" class="btn btn-small bar-action" hidden>退出机器视图</button></div>
+        <div class="window-body">
+          <div class="readonly-banner" role="note">
+            <canvas id="readonly-icon" aria-hidden="true"></canvas>
+            <div>
+              <strong>只读存档 · 绝不写回游戏</strong>
+              <p>本工具只读取存档文件，不会修改它。「确认更改」只更新本工具里的数据，请回到游戏中按结果手动摆放模组；下次导入存档时，以游戏存档为准。</p>
+            </div>
+          </div>
+          <p id="save-summary" class="hint"></p>
+          <div id="machine-list" class="machine-list" role="tablist" aria-label="选择机器"></div>
+          <div id="machine-panel" class="machine-panel" hidden>
+            <div class="machine-head">
+              <strong id="machine-title"></strong>
+              <span id="machine-bay" class="muted"></span>
+            </div>
+            <div class="bay-upgrade">
+              <button id="upgrade-bay" class="btn btn-small btn-orange">升级模组舱</button>
+              <button id="downgrade-bay" class="btn btn-small">撤回升级</button>
+              <span id="bay-upgrade-note" class="muted"></span>
+            </div>
+            <p id="machine-hint" class="hint"></p>
+            <div id="machine-stats" class="machine-stats"></div>
+            <div class="machine-actions">
+              <button id="restore-layout" class="btn btn-small" hidden>恢复原排布</button>
+              <span id="snapshot-note" class="muted"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="window board-window">
+        <div class="window-bar"><h2>模组舱</h2><span class="latin">MODULE BAY</span><span id="board-count" class="pill"></span>
+          <button id="edit-board" class="btn btn-small bar-action">编辑插槽</button></div>
+        <div class="window-body">
+          <div id="board-tools" hidden>
+            <span>点击格子切换可用状态</span>
+            <label>列 <input id="board-w" type="number"></label>
+            <label>行 <input id="board-h" type="number"></label>
+            <button id="resize-board" class="btn btn-small">调整尺寸</button>
+            <button id="reset-board" class="btn btn-small">恢复默认舱体</button>
+          </div>
+          <div class="bay">
+            <div class="bay-label"><span class="tag">模组</span><span id="occupancy" class="latin">STANDBY</span></div>
+            <div class="bay-frame"><div id="board" role="group" aria-label="模组舱布局"></div></div>
+          </div>
+          <div id="legend" aria-label="布局图注"></div>
+          <div class="metrics">
+            <div data-metric="0"><span>效率</span><strong id="metric-0">—</strong></div>
+            <div data-metric="1"><span>质量</span><strong id="metric-1">—</strong></div>
+            <div data-metric="2"><span>性能</span><strong id="metric-2">—</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="window search-window">
+        <div class="window-bar"><h2>优化目标</h2><span class="latin">TARGET</span>
+          <button id="rules-btn" class="btn btn-small bar-action">计分规则</button></div>
+        <div class="window-body">
+          <div class="target-row">
+            <div class="segmented" id="targets">
+              <button data-target="0">效率</button>
+              <button data-target="1">质量</button>
+              <button data-target="2">性能</button>
+              <button data-target="custom">自定义</button>
+            </div>
+            <label class="check"><input type="checkbox" id="optional">允许冗余
+              <span class="info" title="勾选：可舍弃非必选且未锁定的候选件；不勾选：全部未锁定件必须放入。锁定件始终排除。两种模式都允许留空格。">?</span></label>
+          </div>
+          <div id="custom-panel" hidden>
+            <p class="hint">先同时满足所有已填写的范围，再按首要、次要属性依次取最大值。留空表示不限制。</p>
+            <div class="constraint-editor">
+              <div class="constraint-head"><span>属性</span><span class="bounds-head"><span class="lo">下界</span><span class="mid">中值</span><span class="hi">上界</span></span><span>匹配</span></div>
+              <div id="constraint-inputs"></div>
+            </div>
+            <div class="priority-row">
+              <label>首要优先属性<select id="custom-primary"></select></label>
+              <label>次要优先属性<select id="custom-secondary"></select></label>
+            </div>
+            <p id="priority-note" class="hint"></p>
+            <p id="custom-error" class="error" role="alert"></p>
+            <div id="constraint-result"></div>
+          </div>
+          <div class="run-row">
+            <label>搜索时长<select id="budget"></select></label>
+            <button id="run" class="btn btn-green btn-large">开始优化</button>
+            <button id="stop" class="btn btn-red btn-large" hidden>停止搜索</button>
+          </div>
+          <p class="hint" id="mode-hint"></p>
+          <div class="status-bar">
+            <span id="status-dot" class="dot"></span>
+            <strong id="status" role="status" aria-live="polite">准备就绪</strong>
+            <span id="search-stats" class="latin"></span>
+          </div>
+          <div id="result-note" class="hint"></div>
+          <div id="search-progress" hidden><div></div></div>
+        </div>
+      </div>
+
+      <div class="window details-window">
+        <div class="window-bar"><h2>属性明细</h2><span class="latin">OUTPUT</span>
+          <button id="export-result" class="btn btn-small bar-action" disabled>导出结果</button></div>
+        <div class="window-body">
+          <div id="details" class="empty">完成一次搜索后，查看每件插入件的贡献。</div>
+          <div class="lock-actions">
+            <button id="lock-result" class="btn btn-orange" hidden>锁定本次布局中的所有插入物</button>
+            <button id="unlock-all" class="btn" hidden>解除全部锁定</button>
+            <p id="lock-note" class="hint" aria-live="polite"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <footer class="terminal-foot">
+    <span class="latin">LOCAL COMPUTATION</span>
+    <span>非官方粉丝工具，与 Questing Goose Studio 无关。不含任何游戏素材：像素画为原创，仅沿用游戏中的名词。计算在本地完成，不上传任何数据。</span>
+    <span class="latin" id="app-version"></span>
+    <button id="help-btn" class="btn btn-small">使用说明</button>
+  </footer>
+</main>
+
+<dialog id="item-dialog" class="window">
+  <form id="item-form">
+    <div class="window-bar"><h2 id="item-title">添加插入件</h2><button type="button" class="close-x" data-close="item-dialog" aria-label="关闭">×</button></div>
+    <div class="window-body editor-layout">
+      <section class="picker" aria-label="选择颜色与形状">
+        <span class="field step-label"><b>1</b> 颜色</span>
+        <div id="color-tabs" class="color-tabs" role="tablist"></div>
+        <p id="tab-hint" class="hint"></p>
+        <span class="field step-label"><b>2</b> 形状</span>
+        <div id="kind-tiles" class="kind-tiles" role="listbox" aria-label="模组种类与形状"></div>
+        <div id="custom-shape" hidden>
+          <div id="shape-editor"></div>
+          <p class="hint">点击格子绘制，所有格子须共边相连。</p>
+          <button type="button" id="shape-clear" class="btn btn-small">清空形状</button>
+        </div>
+      </section>
+      <section class="editor-main" aria-label="属性">
+        <div class="selected-kind">
+          <canvas id="shape-preview" class="shape-preview" aria-hidden="true"></canvas>
+          <div>
+            <strong id="selected-kind-name"></strong>
+            <div id="kind-info" class="kind-info"></div>
+          </div>
+        </div>
+        <span class="field step-label"><b>3</b> 属性与词条</span>
+        <label class="field">名称 / 标签（可选）<input id="item-name" placeholder="填官方名称或简称会自动选中对应种类；其他内容作为标签"></label>
+        <p id="name-match" class="hint name-match" aria-live="polite"></p>
+        <div class="attribute-inputs">
+          <label>效率<input id="base-0" type="number" step="any" required value="0"></label>
+          <label>质量<input id="base-1" type="number" step="any" required value="0"></label>
+          <label>性能<input id="base-2" type="number" step="any" required value="0"></label>
+        </div>
+        <p id="base-hint" class="hint">填写游戏中显示的基础属性（不含挂载等临时加成），支持负数。</p>
+        <button type="button" id="apply-template" class="btn btn-small">套用官方模板数值</button>
+        <div class="qty-row">
+          <label class="field">重复数量<input id="item-qty" type="number" value="1" required></label>
+          <label class="check"><input type="checkbox" id="item-required">必选</label>
+          <label class="check"><input type="checkbox" id="item-locked">锁定一个</label>
+        </div>
+        <div id="trait-editor">
+          <span class="field">模组效果 <span class="muted">可多选</span></span>
+          <div id="trait-options" class="trait-options"></div>
+        </div>
+        <div id="node-info" class="trait-chip trait-node-info" hidden></div>
+      </section>
+    </div>
+    <p id="form-error" class="error" role="alert"></p>
+    <div class="dialog-actions">
+      <button type="button" class="btn" data-close="item-dialog">取消</button>
+      <button type="submit" class="btn btn-green">保存插入件</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="rules-dialog" class="window">
+  <div class="window-bar"><h2>计分规则</h2><button class="close-x" data-close="rules-dialog" aria-label="关闭">×</button></div>
+  <div class="window-body">
+    <p class="paper-note">与游戏程序一致：所有跨插入件读取都使用基础值，加成不向邻居传播；全部为整数运算，每一项效果单独向零取整后相加。</p>
+    <div class="rule-grid">
+      <label>挂载边缘（固定）<select id="rule-edge" disabled><option value="global">仅对应方向的最外侧大边</option></select></label>
+    </div>
+    <div class="rate-grid">
+      <label>边缘挂载 %<input id="rule-mount" type="number" step="any"></label>
+      <label>负反馈吸收 %<input id="rule-negativeAbsorb" type="number" step="any"></label>
+      <label>每节点接收 %<input id="rule-receiver" type="number" step="any"></label>
+      <label>节点吸收 %<input id="rule-nodeAbsorb" type="number" step="any"></label>
+    </div>
+    <details open>
+      <summary>游戏词条与本程序口径</summary>
+      <div id="rules-traits" class="rules-traits"></div>
+      <ul>
+        <li>只认上下左右共边，不认对角；与同一件接触多条边仍只算一个邻居。</li>
+        <li>模组 = 基础值 + 向零取整（基础值 × 侧边挂载%）+ 向零取整（基础值 × 顶部挂载%）+ 向零取整（基础值 × 每节点接收% × 相邻节点数）+ 向零取整（相邻负面基础值之和 × 负反馈%）。</li>
+        <li>节点 = 向零取整（相邻模组基础值之和 × 节点吸收%）；节点自身基础值不计入。</li>
+        <li>取整方向为零：3.8 → 3，−3.8 → −3。例如节点相邻两个基础值为 19 的模组：向零取整（(19 + 19) × <span data-rule="nodeAbsorb"></span>%）。效率、质量、性能分别汇总，系统总值均为整数。</li>
+      </ul>
+    </details>
+    <div class="dialog-actions">
+      <button id="reset-rules" class="btn">恢复默认</button>
+      <button id="save-rules" class="btn btn-green">应用规则</button>
+    </div>
+    <p id="rules-error" class="error"></p>
+  </div>
+</dialog>
+
+<dialog id="help-dialog" class="window">
+  <div class="window-bar"><h2>从录入到最佳布局</h2><button class="close-x" data-close="help-dialog" aria-label="关闭">×</button></div>
+  <ol class="window-body help-list">
+    <li><strong>录入候选件</strong><p>选择官方种类与形状（输入官方名称或简称会自动匹配种类；显示名始终为官方名称，输入的其他名字作为标签），填写效率、质量、性能的初始数值（可为负），勾选模组效果与数量。节点有官方的中（1×2）、小（1×1）两种。</p></li>
+    <li><strong>核对插槽与规则</strong><p>默认舱体为 <span data-board-default></span>。可编辑可用格与行列数；计分规则里列出了全部口径。</p></li>
+    <li><strong>选择目标并搜索</strong><p>自定义目标支持三项属性各自的上下界，留空不限制。先满足范围，再最大化首要属性，首要相同才比较次要属性。允许冗余时可舍弃未标记的候选件；「锁定一个」将一件分离并排除；「必选」要求该堆叠全部数量都用上。</p></li>
+    <li><strong>理解结果状态</strong><p>「当前最佳」是已找到的可行方案，尚未证明最优；「已证明全局最优」表示分支定界搜索完成。不限时模式会持续搜索，可随时停止。</p></li>
+    <li><strong>锁定布局</strong><p>优化结束后，可锁定结果中实际用到的全部插入物，下次优化时排除；锁定不占插槽、不固定位置。</p></li>
+    <li><strong>外观说明</strong><p>模组按种类和形状显示本工具原创的像素画（不含游戏贴图）；游戏中不存在的组合显示为斜纹占位样式。旧数据未记录种类时按形状与属性推断。</p></li>
+  </ol>
+</dialog>
+
+<dialog id="confirm-dialog" class="window confirm-dialog">
+  <div class="window-bar"><h2 id="confirm-title">请确认</h2><button type="button" class="close-x" data-confirm="cancel" aria-label="关闭">×</button></div>
+  <div class="window-body confirm-body">
+    <canvas id="confirm-icon" aria-hidden="true"></canvas>
+    <div id="confirm-message"></div>
+  </div>
+  <div class="dialog-actions">
+    <button type="button" class="btn" data-confirm="cancel">取消</button>
+    <button type="button" id="confirm-ok" class="btn btn-orange" data-confirm="ok">确认</button>
+  </div>
+</dialog>
+
+<div id="toast" role="status"></div>
+<script type="module" src="app.js"></script>
+</body>
+</html>
