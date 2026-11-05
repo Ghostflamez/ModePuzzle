@@ -1,6 +1,7 @@
 /* Module visuals: shape matching against the game's kinds, and canvas drawing of this
- * project's own pixel art (module-art.js). A kind/shape combination the game does not have
- * is drawn with the placeholder style. */
+ * project's own pixel art (module-art.js). If the user allowed it, sprites read from their own
+ * local game install (core/game-art.js) replace the generated art. A kind/shape combination the
+ * game does not have is drawn with the placeholder style. */
 import {SHAPES, ART_CELL, renderArt} from './module-art.js';
 import {MODULE_KINDS, UNOFFICIAL_KIND} from '../config/catalog.js';
 import {METRICS} from '../config/game-rules.js';
@@ -103,6 +104,41 @@ export function resolveVisual(item, cells = item.shape) {
 
 /* ---------- canvas drawing (browser only) ---------- */
 
+/* ---------- opt-in game sprites ---------- */
+
+let gameArt = null;
+const decoded = new Map();
+/** Use a checked sprite pack (or null to go back to the generated art). */
+export function setGameArt(pack) {
+  gameArt = pack;
+  decoded.clear();
+}
+export const gameArtActive = () => !!gameArt;
+
+function gameSpriteCanvas(name) {
+  if (decoded.has(name)) return decoded.get(name);
+  const s = gameArt.sprites[name];
+  const canvas = document.createElement('canvas');
+  canvas.width = s.w;
+  canvas.height = s.h;
+  const ctx = canvas.getContext('2d');
+  const img = ctx.createImageData(s.w, s.h);
+  s.rows.forEach((row, y) => {
+    for (let x = 0; x < row.length; x++) {
+      if (row[x] === gameArt.transparent) continue;
+      const hex = gameArt.palette[gameArt.alphabet.indexOf(row[x])];
+      const i = (y * s.w + x) * 4;
+      img.data[i] = parseInt(hex.slice(1, 3), 16);
+      img.data[i + 1] = parseInt(hex.slice(3, 5), 16);
+      img.data[i + 2] = parseInt(hex.slice(5, 7), 16);
+      img.data[i + 3] = 255;
+    }
+  });
+  ctx.putImageData(img, 0, 0);
+  decoded.set(name, canvas);
+  return canvas;
+}
+
 const drawn = new Map();
 /** Generated art of a kind on these exact cells, as a 1:1 canvas (cached). */
 function artCanvas(kindId, cells) {
@@ -167,11 +203,20 @@ export function paintVisual(canvas, visual, unit, {selected = false} = {}) {
     drawPlaceholder(ctx, visual.cells, unit);
     return canvas;
   }
-  // The art is drawn on the placed cells directly, so no rotation or mirroring is needed.
-  const art = artCanvas(visual.kindId, visual.cells);
   ctx.save();
   if (selected) ctx.filter = `brightness(${BOARD_RENDER.selectedBrightness})`;
-  ctx.drawImage(art, 0, 0, canvas.width, canvas.height);
+  if (gameArt?.sprites[visual.sprite]) {
+    // Game sprite in its own orientation: rotate / mirror into place.
+    const art = gameSpriteCanvas(visual.sprite);
+    const scale = unit / CELL_PIXELS;
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate(visual.r * Math.PI / 2);
+    if (visual.f) ctx.scale(-1, 1);
+    ctx.drawImage(art, -art.width * scale / 2, -art.height * scale / 2, art.width * scale, art.height * scale);
+  } else {
+    // Generated art is drawn on the placed cells directly, so no rotation or mirroring is needed.
+    ctx.drawImage(artCanvas(visual.kindId, visual.cells), 0, 0, canvas.width, canvas.height);
+  }
   ctx.restore();
   return canvas;
 }

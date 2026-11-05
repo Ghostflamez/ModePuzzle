@@ -24,7 +24,9 @@ import {
 } from './core/machine-view.js';
 import {machineStats, MACHINE_OUTPUTS} from './core/machine-stats.js';
 import {MAX_SAVE_BYTES, MACHINE_BAYS, UNKNOWN_STANDARD_MACHINE, BAY_LAYOUTS} from './config/machines.js';
-import {resolveVisual, paintVisual, thumbnail, pixelIcon, kindShapes} from './render/sprites.js';
+import {resolveVisual, paintVisual, thumbnail, pixelIcon, kindShapes, setGameArt, gameArtActive} from './render/sprites.js';
+import {checkGameArt, loadGameArt, saveGameArt, clearGameArt} from './core/game-art.js';
+import {openStore, createWriteThroughStore} from './core/app-store.js';
 
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -56,15 +58,20 @@ const filter = {text: '', group: 'all', trait: 'all', state: 'all'};
 /** Draft of the item dialog. */
 let draft = null;
 
-try {
-  const saved = loadSavedConfig(localStorage);
-  if (saved) config = saved;
-} catch {
-  storageProtected = true;
-  setTimeout(() => {
-    toast('旧存档读取失败，原数据已保留且不会被覆盖；请先导出备份');
-    $('#save-state').textContent = '原存档已保护，请导出备份';
-  });
+/** Data store: localStorage in the browser, a file in AppData in the desktop build (see boot). */
+let store = null;
+
+function loadStoredConfig() {
+  try {
+    const saved = loadSavedConfig(store);
+    if (saved) config = saved;
+  } catch {
+    storageProtected = true;
+    setTimeout(() => {
+      toast('旧存档读取失败，原数据已保留且不会被覆盖；请先导出备份');
+      $('#save-state').textContent = '原存档已保护，请导出备份';
+    });
+  }
 }
 
 /* ---------- helpers ---------- */
@@ -189,8 +196,9 @@ function drawBrand() {
 function persist() {
   try {
     if (storageProtected) throw Error('旧存档受保护');
-    saveConfig(localStorage, config);
-    $('#save-state').textContent = '已自动保存到此浏览器';
+    if (!store || store.volatile) throw Error('存储不可用');
+    saveConfig(store, config);
+    $('#save-state').textContent = globalThis.MODEPUZZLE_DESKTOP ? '已自动保存到本机' : '已自动保存到此浏览器';
   } catch {
     $('#save-state').textContent = '自动保存不可用，请导出配置';
   }
@@ -1471,7 +1479,7 @@ $('#export-btn').onclick = () => {
     return;
   }
   try {
-    download(FILES.originalBackup, localStorage.getItem(STORAGE_KEY) || '');
+    download(FILES.originalBackup, store.getItem(STORAGE_KEY) || '');
   } catch {
     toast('无法读取原存档');
   }
@@ -1501,7 +1509,7 @@ $('#save-file').onchange = async e => {
     if (!file) return;
     if (file.size > MAX_SAVE_BYTES) throw Error('存档文件过大');
     const parsed = readSave(await file.text());
-    try { backupBeforeSaveImport(localStorage, config); } catch { /* storage full or unavailable: the confirm already warned */ }
+    try { backupBeforeSaveImport(store, config); } catch { /* storage full or unavailable: the confirm already warned */ }
     config = importSave(config, parsed, {file: file.name, importedAt: file.lastModified, newId});
     editingBoard = false;
     invalidate();
@@ -1550,6 +1558,88 @@ $('#import-file').onchange = async e => {
     $('#import-file').value = '';
   }
 };
+/* ---------- opt-in game sprites (read from the user's own install) ---------- */
+
+/** Desktop build: the launcher exposes window.pywebview.api once ready. */
+const desktopApi = () => (window.pywebview?.api?.read_game_sprites ? window.pywebview.api : null);
+
+function applyGameArt(pack) {
+  setGameArt(pack);
+  drawBrand();
+  render();
+}
+
+function refreshGameArtDialog() {
+  const desktop = !!desktopApi();
+  $('#game-art-desktop').hidden = !desktop;
+  $('#game-art-browser').hidden = desktop;
+  $('#game-art-allow').textContent = desktop ? '允许并读取' : '选择贴图包…';
+  $('#game-art-off').disabled = !gameArtActive();
+  const status = $('#game-art-status');
+  status.textContent = gameArtActive() ? '已启用：正在使用本机游戏贴图。' : '未启用：正在使用原创像素画。';
+  status.classList.toggle('on', gameArtActive());
+}
+
+function useGameArt(raw) {
+  const {pack, used, skipped} = checkGameArt(raw);
+  try { saveGameArt(store, pack); } catch { toast('本机存储不可用，贴图只在本次打开期间有效'); }
+  applyGameArt(pack);
+  refreshGameArtDialog();
+  toast(`已启用本机游戏贴图（${used} 张）` + (skipped.length ? `，${skipped.length} 张形状不符已跳过` : ''));
+}
+
+$('#game-art-btn').onclick = async () => {
+  refreshGameArtDialog();
+  $('#game-art-dialog').showModal();
+  const api = desktopApi();
+  if (api && !$('#game-art-dir').value) $('#game-art-dir').value = await api.find_game_dir() || '';
+};
+$('#game-art-find').onclick = async () => {
+  const dir = await desktopApi().find_game_dir();
+  $('#game-art-dir').value = dir || '';
+  if (!dir) toast('没有在 Steam 库中找到游戏，请手动选择安装目录');
+};
+$('#game-art-browse').onclick = async () => {
+  const dir = await desktopApi().choose_game_dir();
+  if (dir) $('#game-art-dir').value = dir;
+};
+$('#game-art-allow').onclick = async () => {
+  const api = desktopApi();
+  if (!api) { $('#game-art-file').click(); return; }
+  const dir = $('#game-art-dir').value.trim();
+  if (!dir) { toast('请先填写或选择游戏安装目录'); return; }
+  const button = $('#game-art-allow');
+  button.disabled = true;
+  button.textContent = '读取中…';
+  try {
+    const res = await api.read_game_sprites(dir);
+    if (!res.ok) throw Error(res.error);
+    useGameArt(res.pack);
+  } catch (err) {
+    toast('读取失败：' + err.message);
+  } finally {
+    button.disabled = false;
+    refreshGameArtDialog();
+  }
+};
+$('#game-art-file').onchange = async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    useGameArt(JSON.parse(await file.text()));
+  } catch (err) {
+    toast('贴图包无效：' + err.message);
+  } finally {
+    e.target.value = '';
+  }
+};
+$('#game-art-off').onclick = () => {
+  try { clearGameArt(store); } catch { /* storage unavailable: nothing stored */ }
+  applyGameArt(null);
+  refreshGameArtDialog();
+  toast('已停用并删除本机游戏贴图，恢复原创像素画');
+};
+
 $('#demo-btn').onclick = async () => {
   if (config.items.length && !await askConfirm({title: '加载演示数据', message: '加载演示会替换当前配置。建议先「导出配置」备份。', confirmText: '替换为演示数据', danger: true})) return;
   config = blank();
@@ -1561,13 +1651,27 @@ $('#demo-btn').onclick = async () => {
 /* ---------- boot ---------- */
 
 $('#app-version').textContent = 'v' + APP_VERSION;
-fillStaticText();
-buildSelects();
-buildFilters();
-buildCustomEditor();
-drawBrand();
-drawReadonlyIcon();
-new ResizeObserver(() => requestAnimationFrame(renderPieces)).observe($('#board'));
-result = currentMachineResult();
-render();
-$('#result-note').textContent = '限时搜索返回当前最佳布局；只有搜索完成后才标记为全局最优。';
+async function boot() {
+  try {
+    store = await openStore();
+    store.getItem(STORAGE_KEY);            // localStorage can throw on access (blocked / private mode)
+  } catch {
+    store = Object.assign(createWriteThroughStore({}, () => {}), {volatile: true});   // session only
+    $('#save-state').textContent = '自动保存不可用，请导出配置';
+  }
+  if (store !== globalThis.localStorage && !store.volatile) $('#save-state').textContent = '自动保存在本机';
+  loadStoredConfig();
+  try { setGameArt(loadGameArt(store)); } catch { /* storage unavailable */ }
+  fillStaticText();
+  buildSelects();
+  buildFilters();
+  buildCustomEditor();
+  drawBrand();
+  drawReadonlyIcon();
+  new ResizeObserver(() => requestAnimationFrame(renderPieces)).observe($('#board'));
+  result = currentMachineResult();
+  render();
+  $('#result-note').textContent = '限时搜索返回当前最佳布局；只有搜索完成后才标记为全局最优。';
+}
+
+boot();

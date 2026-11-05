@@ -20,6 +20,7 @@
     <span id="save-state" class="lcd">自动保存在此浏览器</span>
     <button id="save-import-btn" class="btn btn-orange" title="读取游戏存档 save_N.es3 —— 只读，不会修改或写回存档">导入游戏存档（只读）</button>
     <input type="file" id="save-file" accept=".es3" hidden>
+    <button id="game-art-btn" class="btn" title="可选：读取你本机游戏中的模组贴图来替换原创像素画">游戏贴图</button>
     <button id="import-btn" class="btn">导入配置</button>
     <button id="export-btn" class="btn">导出配置</button>
     <input type="file" id="import-file" accept=".json,application/json" hidden>
@@ -306,6 +307,34 @@
   <div class="dialog-actions">
     <button type="button" class="btn" data-confirm="cancel">取消</button>
     <button type="button" id="confirm-ok" class="btn btn-orange" data-confirm="ok">确认</button>
+  </div>
+</dialog>
+
+<dialog id="game-art-dialog" class="window game-art-dialog">
+  <div class="window-bar"><h2>使用本机游戏贴图（可选）</h2><button type="button" class="close-x" data-close="game-art-dialog" aria-label="关闭">×</button></div>
+  <div class="window-body">
+    <div class="paper-note">
+      <p>本工具自带的是原创像素画，不含任何游戏素材。如果你愿意，可以让它读取<strong>你本机已安装的《Probably Stolen》</strong>里的模组贴图来替换显示。</p>
+      <p>· 只读取游戏文件，不会修改游戏或存档；<br>· 读取结果只保存在这台电脑的本工具里，不上传、不写入导出的配置；<br>· 随时可以在这里停用并删除。</p>
+    </div>
+    <p id="game-art-status" class="game-art-status"></p>
+    <div id="game-art-desktop" class="game-art-section" hidden>
+      <label class="field">游戏安装目录<input id="game-art-dir" placeholder="例如 D:\SteamLibrary\steamapps\common\Probably Stolen"></label>
+      <div class="game-art-row">
+        <button type="button" id="game-art-find" class="btn btn-small">自动查找</button>
+        <button type="button" id="game-art-browse" class="btn btn-small">浏览…</button>
+      </div>
+    </div>
+    <div id="game-art-browser" class="game-art-section" hidden>
+      <p class="muted">浏览器无法直接读取游戏目录。请在本工具的源码目录运行下面的命令（需要 Python、UnityPy、Pillow），生成只保存在你电脑上的贴图包，再在这里选择它：</p>
+      <code class="game-art-cmd">python scripts/extract_local_sprites.py</code>
+      <input type="file" id="game-art-file" accept=".json,application/json" hidden>
+    </div>
+  </div>
+  <div class="dialog-actions">
+    <button type="button" id="game-art-off" class="btn btn-red">停用并删除</button>
+    <button type="button" class="btn" data-close="game-art-dialog">关闭</button>
+    <button type="button" id="game-art-allow" class="btn btn-orange">允许并读取</button>
   </div>
 </dialog>
 

@@ -579,3 +579,12 @@ details li { margin: 4px 0; color: var(--muted); }
 .learning-cap-note { font-size: 12px; margin-top: 4px; }
 .result-hedge { display: flex; gap: 8px; align-items: flex-start; padding: 8px 10px; margin-bottom: 10px; border: 2px solid #4f8f6a; background: rgba(79, 143, 106, .14); }
 .result-hedge.partial { border-color: #c08a3a; background: rgba(192, 138, 58, .14); }
+
+/* ---------- opt-in game sprites ---------- */
+.game-art-dialog { width: min(560px, calc(100vw - 32px)); }
+.game-art-status { margin: 10px 0; font-size: 14px; }
+.game-art-status.on { color: var(--teal); }
+.game-art-section { display: grid; gap: 8px; margin-top: 8px; }
+.game-art-section input { width: 100%; }
+.game-art-row { display: flex; gap: 8px; }
+.game-art-cmd { display: block; padding: 6px 8px; background: rgba(0, 0, 0, .3); user-select: all; }

@@ -34,8 +34,8 @@ python scripts/build_exe.py                   # 生成 release/ModePuzzle-v<版�
 ```
 
 - 版本号只在 `src/config/app-info.js` 修改（页脚、窗口标题、exe 文件属性都读取它；`package.json` 需手动同步）。
-- exe 用系统自带的 WebView2 打开独立窗口（Windows 10/11 一般已预装），页面由内置服务在固定端口 `42173` 提供。端口不要改，否则页面来源变化，之前保存的数据会「消失」。
-- 桌面版数据保存在 `%APPDATA%\ModePuzzle\webview`，与浏览器版的 localStorage 互不相通；用「导出配置 / 导入配置」迁移。
+- exe 用系统自带的 WebView2 打开独立窗口（Windows 10/11 一般已预装），页面由内置服务提供：优先用端口 `42173`，被占用时自动换一个空闲端口。同一时间只允许运行一个实例。
+- 桌面版数据保存在 `%APPDATA%\ModePuzzle\storage.json`（经启动器读写，不随端口变化），与浏览器版的 localStorage 互不相通；用「导出配置 / 导入配置」迁移。旧版桌面数据会在首次启动时自动搬入该文件。
 - 启动器源码：`desktop/launcher.py`。
 
 源码使用 ES modules 与模块 Worker，不能直接用 file:// 打开 `src/index.html`；需要离线使用时用构建出的单文件。
@@ -140,6 +140,14 @@ python scripts/build_fonts.py --wdxl WDXLLubrifontSC-Regular.ttf
 旧数据没有 `kind` 字段时，按「该形状的官方种类 + 属性正负号最接近的模板」推断，卡片标注「推断」，编辑保存后写入 `kind`。推断只影响显示，不改动任何录入数值。
 
 词条（侧边挂载、顶部挂载、负反馈、接收器、辅助节点）使用游戏中的名称，说明文字由本项目自行撰写，百分比随当前计分规则填入；卡片上以带像素图标的彩色标签显示，布局中触发的挂载会在舱体边缘高亮。
+
+### 可选：使用本机游戏贴图
+
+点页头的「游戏贴图」，在你明确允许后，可以用你本机已安装游戏里的模组贴图替换原创像素画：
+
+- 桌面版：自动在 Steam 库中查找安装目录（也可手动选择），点「允许并读取」，由启动器只读读取（`desktop/game_sprites.py`）。
+- 浏览器版：运行 `python scripts/extract_local_sprites.py`（需要 UnityPy、Pillow），生成只存在你电脑上的贴图包，再在对话框里选择它。
+- 读取结果只存放在本机（独立的 localStorage 键 `module-layout-game-art-v1`），不进入配置、导出文件或任何构建产物；「停用并删除」随时恢复原创像素画。形状对不上的贴图会被跳过，仍显示原创画。
 
 本项目不包含、也不再分发任何游戏素材（贴图、音效、本地化表）。字体来自其上游开源发布，许可见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
 

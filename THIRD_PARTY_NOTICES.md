@@ -2,6 +2,7 @@
 
 模组拼合实验室是非官方粉丝工具，与 Questing Goose Studio 及《Probably Stolen》官方无关。
 本项目**不包含任何游戏素材**：模组像素画由代码原创生成，说明文字为自行撰写，仅沿用游戏中的名词（模组种类、词条、机器名称）与规则数值。
+可选的「游戏贴图」功能只在用户允许后，从其本机已安装的游戏中读取贴图并仅保存在本机，本项目不分发这些贴图。
 源代码以 MIT 许可发布（见 [LICENSE](LICENSE)）；下列字体保留各自的许可。
 
 ModePuzzle is an unofficial fan tool, not affiliated with or endorsed by Questing Goose Studio.

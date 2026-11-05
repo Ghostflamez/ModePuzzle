@@ -6,3 +6,6 @@ __pycache__/
 
 build/
 release/
+
+# Sprite packs read from a local game install: never commit
+*game-sprites*.json

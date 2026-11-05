@@ -1,7 +1,7 @@
 """Build the Windows release: release/ModePuzzle-v<version>.exe (one file, WebView2 window).
 
 Steps: offline HTML (scripts/build.py) -> icon + version info -> PyInstaller --onefile.
-Needs: pip install pyinstaller pywebview pillow. Usage: python scripts/build_exe.py
+Needs: pip install pyinstaller pywebview pillow UnityPy. Usage: python scripts/build_exe.py
 """
 from __future__ import annotations
 
@@ -74,11 +74,19 @@ def version_file(path: Path, name: str, version: str) -> None:
 
 
 def main() -> None:
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--dist', default=str(RELEASE), help='output folder (default: release/)')
+    out_dir = Path(parser.parse_args().dist)
     name, version = app_info()
     subprocess.run([sys.executable, str(ROOT / 'scripts' / 'build.py')], check=True)
     shutil.rmtree(WORK, ignore_errors=True)
     WORK.mkdir(parents=True)
-    shutil.copy(ROOT / 'dist' / 'module-layout-offline.html', WORK / 'app.html')
+    # The desktop page keeps its data in a file via the launcher (src/core/app-store.js).
+    page = (ROOT / 'dist' / 'module-layout-offline.html').read_text(encoding='utf-8')
+    assert '<head>' in page
+    page = page.replace('<head>', '<head>\n<script>window.MODEPUZZLE_DESKTOP = true;</script>', 1)
+    (WORK / 'app.html').write_text(page, encoding='utf-8')
     (WORK / 'app_info.py').write_text(f'APP_NAME = {name!r}\nAPP_VERSION = {version!r}\n', encoding='utf-8')
     make_icon(WORK / 'icon.ico')
     version_file(WORK / 'version.txt', name, version)
@@ -87,16 +95,18 @@ def main() -> None:
         sys.executable, '-m', 'PyInstaller', '--noconfirm', '--clean', '--onefile', '--windowed',
         '--name', exe_name, '--icon', str(WORK / 'icon.ico'), '--version-file', str(WORK / 'version.txt'),
         '--add-data', f'{WORK / "app.html"};.', '--paths', str(WORK),
-        '--distpath', str(RELEASE), '--workpath', str(WORK / 'pyi'), '--specpath', str(WORK),
+        # Opt-in reading of sprites from the user's own game install (desktop/game_sprites.py).
+        '--paths', str(ROOT / 'desktop'), '--collect-all', 'UnityPy', '--collect-all', 'texture2ddecoder', '--collect-all', 'etcpak', '--collect-all', 'fmod_toolkit', '--collect-all', 'archspec',
+        '--distpath', str(out_dir), '--workpath', str(WORK / 'pyi'), '--specpath', str(WORK),
         str(ROOT / 'desktop' / 'launcher.py'),
     ], check=True)
     # Licenses travel with the exe: MIT for the code, full texts for the two bundled fonts.
     for src, dst in [('THIRD_PARTY_NOTICES.md', 'THIRD_PARTY_NOTICES.md'), ('LICENSE', 'LICENSE.txt'),
                      ('src/assets/fonts/OFL-WDXL-Lubrifont-SC.txt', 'OFL-WDXL-Lubrifont-SC.txt'),
                      ('src/assets/fonts/LICENSE-Oldschool-PC-Fonts-CC-BY-SA-4.0.txt', 'LICENSE-Oldschool-PC-Fonts-CC-BY-SA-4.0.txt')]:
-        shutil.copy(ROOT / src, RELEASE / dst)
-    out = RELEASE / f'{exe_name}.exe'
-    print('built', out.relative_to(ROOT), f'{out.stat().st_size // 1024 // 1024} MB')
+        shutil.copy(ROOT / src, out_dir / dst)
+    out = out_dir / f'{exe_name}.exe'
+    print('built', out, f'{out.stat().st_size // 1024 // 1024} MB')
 
 
 if __name__ == '__main__':
